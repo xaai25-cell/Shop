@@ -84,8 +84,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | Variable | Description |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon / publishable key |
-| `SUPABASE_SERVICE_ROLE_KEY` | service role / secret key (server only) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon / publishable key (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` also works) |
+| `SUPABASE_SERVICE_ROLE_KEY` | service role / secret key, server only (`SUPABASE_SECRET_KEY` also works) |
 | `ORDER_TOKEN_SECRET` | 32+ random chars, signs order links |
 | `NEXT_PUBLIC_SITE_URL` | e.g. `https://yourstore.com` |
 | `NEXT_PUBLIC_STORE_NAME` | Store name shown in the UI |

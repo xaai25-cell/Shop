@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { siteConfig } from "./config";
+import { SUPABASE_URL } from "./supabase/keys";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -43,7 +44,7 @@ export const isRemoteImage = (path: string) => /^https:\/\//.test(path);
 export function productImageUrl(path: string | null | undefined) {
   if (!path) return null;
   if (isRemoteImage(path)) return path;
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const base = SUPABASE_URL;
   return `${base}/storage/v1/object/public/product-images/${path}`;
 }
 

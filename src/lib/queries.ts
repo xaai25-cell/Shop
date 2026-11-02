@@ -5,6 +5,10 @@ import { PAGE_SIZE } from "@/lib/config";
 import { sanitizeSearch } from "@/lib/utils";
 import type { Category, Product, ProductListing } from "@/lib/types";
 
+function logError(where: string, error: { message: string } | null) {
+  if (error) console.error(`[catalog] ${where}:`, error.message);
+}
+
 export const getCategories = cache(async (): Promise<Category[]> => {
   const { data, error } = await createPublicClient()
     .from("categories")
@@ -12,6 +16,7 @@ export const getCategories = cache(async (): Promise<Category[]> => {
     .eq("is_active", true)
     .order("sort_order")
     .order("name");
+  logError("categories", error);
   if (error) throw new Error(error.message);
   return (data ?? []) as Category[];
 });
@@ -61,6 +66,7 @@ export async function getProducts(filters: ProductFilters) {
   }
 
   const { data, count, error } = await query.order("id").range(from, from + PAGE_SIZE - 1);
+  logError("product list", error);
   if (error) throw new Error(error.message);
 
   return {
@@ -100,23 +106,25 @@ export const getFilterFacets = cache(async () => {
 });
 
 export async function getFeaturedProducts(limit = 8) {
-  const { data } = await createPublicClient()
+  const { data, error } = await createPublicClient()
     .from("product_listing")
     .select("*")
     .eq("is_active", true)
     .eq("is_featured", true)
     .order("created_at", { ascending: false })
     .limit(limit);
+  logError("featured products", error);
   return (data ?? []) as ProductListing[];
 }
 
 export async function getNewArrivals(limit = 8) {
-  const { data } = await createPublicClient()
+  const { data, error } = await createPublicClient()
     .from("product_listing")
     .select("*")
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(limit);
+  logError("new arrivals", error);
   return (data ?? []) as ProductListing[];
 }
 
@@ -128,12 +136,13 @@ const PRODUCT_SELECT = `
 `;
 
 export const getProductBySlug = cache(async (slug: string): Promise<Product | null> => {
-  const { data } = await createPublicClient()
+  const { data, error } = await createPublicClient()
     .from("products")
     .select(PRODUCT_SELECT)
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
+  logError(`product ${slug}`, error);
   if (!data) return null;
   const product = data as unknown as Product;
   product.images = [...(product.images ?? [])].sort((a, b) => a.sort_order - b.sort_order);

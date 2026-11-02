@@ -85,7 +85,23 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
 }
 
 async function Results({ filters }: { filters: Parameters<typeof getProducts>[0] }) {
-  const { products, total, page, pageCount } = await getProducts(filters);
+  let result: Awaited<ReturnType<typeof getProducts>>;
+  try {
+    result = await getProducts(filters);
+  } catch (error) {
+    // Shows up in Vercel → Logs with the real reason (e.g. missing table or wrong API key).
+    console.error("[products] failed to load:", error instanceof Error ? error.message : error);
+    return (
+      <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-rose-200 bg-rose-50/40 py-20 text-center">
+        <p className="font-semibold">We couldn&apos;t load products right now</p>
+        <p className="mt-1 text-sm text-slate-500">Please refresh the page in a moment.</p>
+        <Link href="/products" className={buttonClasses("outline", "md", "mt-6")}>
+          Try again
+        </Link>
+      </div>
+    );
+  }
+  const { products, total, page, pageCount } = result;
 
   if (products.length === 0) {
     return (
