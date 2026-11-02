@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, ExternalLink, FolderTree, LogOut, Package, ShoppingCart } from "lucide-react";
 import { signOut } from "@/app/admin/actions";
-import { siteConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/logo";
 
 const LINKS = [
   { href: "/admin", label: "Dashboard", icon: BarChart3, exact: true },
@@ -23,9 +23,7 @@ export function AdminNav({ email, name }: { email: string; name: string }) {
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between px-4 py-4 lg:px-6 lg:py-6">
           <Link href="/admin" className="flex items-center gap-2 font-extrabold">
-            <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 text-sm text-white">
-              {siteConfig.name.slice(0, 1)}
-            </span>
+            <Logo className="h-8" />
             Admin
           </Link>
           <form action={signOut} className="lg:hidden">

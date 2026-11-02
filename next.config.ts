@@ -10,7 +10,7 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: https://${supabaseHost}`,
+  `img-src 'self' data: blob: https://${supabaseHost} https://images.unsplash.com`,
   "font-src 'self' data:",
   `connect-src 'self' https://${supabaseHost} wss://${supabaseHost}`,
   "frame-ancestors 'none'",
@@ -37,6 +37,8 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
       { protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" },
+      // Demo product photos (supabase/seed.sql). Remove once you use your own images.
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
     ],
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },

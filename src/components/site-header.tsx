@@ -9,6 +9,7 @@ import { useCart, cartCount } from "@/lib/cart-store";
 import { siteConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import { useHydrated } from "@/lib/use-hydrated";
+import { Logo } from "./logo";
 import type { Category } from "@/lib/types";
 
 export function SiteHeader({ categories }: { categories: Pick<Category, "name" | "slug" | "color">[] }) {
@@ -58,10 +59,8 @@ export function SiteHeader({ categories }: { categories: Pick<Category, "name" |
           {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
 
-        <Link href="/" className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-brand-500 via-fuchsia-500 to-orange-400 text-sm text-white shadow-lg shadow-fuchsia-500/20">
-            {siteConfig.name.slice(0, 1)}
-          </span>
+        <Link href="/" className="group flex items-center gap-2.5 text-lg font-extrabold tracking-tight" aria-label={`${siteConfig.name} home`}>
+          <Logo priority className="h-9 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" />
           <span>{siteConfig.name}</span>
         </Link>
 

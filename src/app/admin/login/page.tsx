@@ -4,6 +4,7 @@ import { getAdmin } from "@/lib/auth";
 import { LoginForm } from "./login-form";
 import { siteConfig } from "@/lib/config";
 import { firstParam } from "@/lib/utils";
+import { Logo } from "@/components/logo";
 
 export const metadata: Metadata = { title: "Admin sign in", robots: { index: false, follow: false } };
 
@@ -22,7 +23,8 @@ export default async function LoginPage({
         <div className="absolute bottom-0 right-0 h-96 w-96 animate-blob rounded-full bg-indigo-600/30 blur-3xl [animation-delay:-5s]" />
       </div>
       <div className="relative w-full max-w-sm rounded-3xl border border-white/10 bg-white/95 p-8 shadow-2xl backdrop-blur">
-        <p className="text-sm font-semibold text-brand-600">{siteConfig.name}</p>
+        <Logo className="h-12" priority />
+        <p className="mt-4 text-sm font-semibold text-brand-600">{siteConfig.name}</p>
         <h1 className="mt-1 text-2xl font-extrabold tracking-tight">Admin sign in</h1>
         <LoginForm next={next} />
       </div>

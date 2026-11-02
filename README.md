@@ -49,7 +49,7 @@ The server decodes every file to prove it's really an image (MIME type isn't tru
 
 ### 1. Supabase
 1. Create a project at [supabase.com](https://supabase.com).
-2. Open **SQL Editor** and run `supabase/migrations/0001_init.sql`. Optionally run `supabase/seed.sql` for demo categories and products.
+2. Open **SQL Editor** and run `supabase/migrations/0001_init.sql`. Then run `supabase/seed.sql` to load the **demo catalog**: 6 categories and 26 products with colour/size variants, stock levels (including some low and sold-out items) and 75 photos. It's safe to run again; it refreshes the demo products.
 3. **Authentication → Providers → Email:** turn off "Allow new users to sign up". Customers don't need accounts, and this keeps strangers from creating logins.
 4. **Authentication → Users → Add user:** create your admin user (email + password).
 5. Make that user an admin (SQL Editor):
@@ -117,6 +117,10 @@ supabase/
   migrations/0001_init.sql   schema, RLS, functions, storage buckets & policies
   seed.sql                   optional demo data
 ```
+
+## Demo photos
+
+The demo products use free photos from [Unsplash](https://unsplash.com) (Unsplash License: free for commercial use, no attribution required). They're loaded straight from `images.unsplash.com` and stored as full URLs, so they don't take up your Supabase storage. Before launch, replace them with your own product photos from the admin panel, or delete the demo products. You can then remove `images.unsplash.com` from `next.config.ts` (in `remotePatterns` and the CSP `img-src`).
 
 ## Notes
 - Next.js image optimisation on Vercel's Hobby plan has a monthly quota. Images are already small WebP files, so if you reach the quota you can set `images.unoptimized = true` in `next.config.ts`.

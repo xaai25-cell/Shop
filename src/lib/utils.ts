@@ -36,9 +36,13 @@ export function slugify(input: string) {
     .slice(0, 80);
 }
 
-/** Public URL for an image stored in the `product-images` bucket. */
+/** Remote images (e.g. demo photos from Unsplash) are stored as full URLs. */
+export const isRemoteImage = (path: string) => /^https:\/\//.test(path);
+
+/** Public URL for an image stored in the `product-images` bucket (or a full remote URL). */
 export function productImageUrl(path: string | null | undefined) {
   if (!path) return null;
+  if (isRemoteImage(path)) return path;
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   return `${base}/storage/v1/object/public/product-images/${path}`;
 }

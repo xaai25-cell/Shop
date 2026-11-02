@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { processImage, IMAGE_PRESETS } from "@/lib/image-processing";
 import { categorySchema, productSchema, statusChangeSchema, type CategoryInput, type ProductInput } from "@/lib/validation";
+import { isRemoteImage } from "@/lib/utils";
 import type { ActionResult } from "@/lib/types";
 
 const uuid = z.string().uuid();
@@ -148,7 +149,8 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
   const { data: images } = await supabase.from("product_images").select("path").eq("product_id", productId);
   const { error } = await supabase.from("products").delete().eq("id", productId);
   if (error) return { ok: false, error: dbError(error.message) };
-  if (images?.length) await supabase.storage.from("product-images").remove(images.map((i) => i.path as string));
+  const stored = (images ?? []).map((i) => i.path as string).filter((p) => !isRemoteImage(p));
+  if (stored.length) await supabase.storage.from("product-images").remove(stored);
 
   revalidateCatalog();
   return { ok: true, message: "Product deleted" };
@@ -253,7 +255,7 @@ export async function deleteProductImage(imageId: string): Promise<ActionResult>
   const { data: img } = await supabase.from("product_images").select("path").eq("id", imageId).single();
   const { error } = await supabase.from("product_images").delete().eq("id", imageId);
   if (error) return { ok: false, error: dbError(error.message) };
-  if (img?.path) await supabase.storage.from("product-images").remove([img.path as string]);
+  if (img?.path && !isRemoteImage(img.path)) await supabase.storage.from("product-images").remove([img.path as string]);
   revalidateCatalog();
   return { ok: true };
 }

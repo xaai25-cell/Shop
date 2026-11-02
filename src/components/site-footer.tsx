@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { siteConfig } from "@/lib/config";
+import { Logo } from "./logo";
 
 export function SiteFooter() {
   return (
     <footer className="mt-24 border-t border-slate-100 bg-slate-50/60">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4 lg:px-8">
         <div className="md:col-span-2">
-          <p className="text-lg font-extrabold">{siteConfig.name}</p>
+          <div className="flex items-center gap-2.5">
+            <Logo className="h-10" />
+            <p className="text-lg font-extrabold">{siteConfig.name}</p>
+          </div>
           <p className="mt-2 max-w-sm text-sm text-slate-500">{siteConfig.description}</p>
         </div>
         <div>
