@@ -5,7 +5,8 @@ import { ProductCard, ProductCardSkeleton } from "@/components/product-card";
 import { ProductFilters } from "@/components/product-filters";
 import { Pagination } from "@/components/pagination";
 import { Stagger, StaggerItem } from "@/components/motion";
-import { firstParam, sanitizeSearch } from "@/lib/utils";
+import { categoryImageUrl, firstParam, sanitizeSearch } from "@/lib/utils";
+import Image from "next/image";
 import { SearchX } from "lucide-react";
 import Link from "next/link";
 import { buttonClasses } from "@/components/ui";
@@ -55,21 +56,38 @@ export default async function ProductsPage({ searchParams }: { searchParams: Sea
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div
-        className="relative overflow-hidden rounded-[2rem] px-6 py-10 sm:px-10"
+        className={`relative overflow-hidden rounded-[2rem] px-6 py-10 sm:px-10 ${activeCategory?.image_path && !filters.q ? "py-14 text-white sm:py-20" : ""}`}
         style={{
           background: activeCategory
             ? `linear-gradient(120deg, ${activeCategory.color}22, ${activeCategory.color}08)`
             : "linear-gradient(120deg, #eef2ff, #fdf2f8 60%, #fff7ed)",
         }}
       >
-        <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+        {activeCategory?.image_path && !filters.q && (
+          <>
+            <Image
+              src={categoryImageUrl(activeCategory.image_path)!}
+              alt=""
+              fill
+              priority
+              sizes="(min-width: 1280px) 1216px, 100vw"
+              className="object-cover"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-0"
+              style={{ background: `linear-gradient(90deg, ${activeCategory.color}f2 0%, ${activeCategory.color}b3 45%, transparent 100%)` }}
+            />
+          </>
+        )}
+        <h1 className="relative text-3xl font-extrabold tracking-tight sm:text-4xl">
           {filters.q ? (
             <>Results for “{sanitizeSearch(filters.q)}”</>
           ) : (
             activeCategory?.name ?? "Shop all"
           )}
         </h1>
-        <p className="mt-2 max-w-xl text-slate-600">
+        <p className={`relative mt-2 max-w-xl ${activeCategory?.image_path && !filters.q ? "text-white/90" : "text-slate-600"}`}>
           {activeCategory?.description ?? "Browse our full collection. Use the filters to find exactly what you want."}
         </p>
       </div>

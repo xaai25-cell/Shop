@@ -275,11 +275,58 @@ export async function saveCategory(input: CategoryInput): Promise<ActionResult> 
   return { ok: true, message: "Category saved" };
 }
 
+export async function uploadCategoryImage(categoryId: string, formData: FormData): Promise<ActionResult> {
+  const { supabase } = await assertAdmin();
+  if (!uuid.safeParse(categoryId).success) return { ok: false, error: "Invalid category." };
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "No file selected." };
+
+  let img;
+  try {
+    img = await processImage(file, IMAGE_PRESETS.category);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Invalid image." };
+  }
+
+  const { data: current } = await supabase.from("categories").select("image_path").eq("id", categoryId).single();
+  const path = `categories/${categoryId}-${randomUUID()}.webp`;
+  const { error: upErr } = await supabase.storage
+    .from("product-images")
+    .upload(path, img.buffer, { contentType: "image/webp", cacheControl: "31536000", upsert: false });
+  if (upErr) return { ok: false, error: dbError(upErr.message) };
+
+  const { error } = await supabase.from("categories").update({ image_path: path }).eq("id", categoryId);
+  if (error) {
+    await supabase.storage.from("product-images").remove([path]);
+    return { ok: false, error: dbError(error.message) };
+  }
+  const old = current?.image_path as string | null | undefined;
+  if (old && !isRemoteImage(old)) await supabase.storage.from("product-images").remove([old]);
+
+  revalidateCatalog();
+  return { ok: true, message: "Category image updated" };
+}
+
+export async function removeCategoryImage(categoryId: string): Promise<ActionResult> {
+  const { supabase } = await assertAdmin();
+  if (!uuid.safeParse(categoryId).success) return { ok: false, error: "Invalid category." };
+  const { data: current } = await supabase.from("categories").select("image_path").eq("id", categoryId).single();
+  const { error } = await supabase.from("categories").update({ image_path: null }).eq("id", categoryId);
+  if (error) return { ok: false, error: dbError(error.message) };
+  const old = current?.image_path as string | null | undefined;
+  if (old && !isRemoteImage(old)) await supabase.storage.from("product-images").remove([old]);
+  revalidateCatalog();
+  return { ok: true, message: "Category image removed" };
+}
+
 export async function deleteCategory(id: string): Promise<ActionResult> {
   const { supabase } = await assertAdmin();
   if (!uuid.safeParse(id).success) return { ok: false, error: "Invalid category." };
+  const { data: current } = await supabase.from("categories").select("image_path").eq("id", id).single();
   const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error) return { ok: false, error: dbError(error.message) };
+  const old = current?.image_path as string | null | undefined;
+  if (old && !isRemoteImage(old)) await supabase.storage.from("product-images").remove([old]);
   revalidateCatalog();
   return { ok: true, message: "Category deleted" };
 }

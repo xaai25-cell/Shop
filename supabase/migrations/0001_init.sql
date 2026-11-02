@@ -61,6 +61,9 @@ create table if not exists public.categories (
   created_at   timestamptz not null default now()
 );
 
+alter table public.categories add column if not exists image_path text
+  check (image_path is null or char_length(image_path) <= 500);
+
 create table if not exists public.products (
   id                uuid primary key default gen_random_uuid(),
   name              text not null check (char_length(name) between 1 and 160),

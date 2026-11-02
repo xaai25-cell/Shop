@@ -11,6 +11,8 @@ type Preset = { maxSize: number; quality: number; maxBytes: number };
 export const IMAGE_PRESETS = {
   /** Product photos: large enough for zoom, small enough for fast pages. */
   product: { maxSize: 1600, quality: 80, maxBytes: 600 * 1024 },
+  /** Category cover photos (wide tiles and banners). */
+  category: { maxSize: 1600, quality: 78, maxBytes: 450 * 1024 },
   /** Bank (BML) transfer slips: keep text legible, aggressively small. */
   receipt: { maxSize: 1400, quality: 72, maxBytes: 350 * 1024 },
 } satisfies Record<string, Preset>;

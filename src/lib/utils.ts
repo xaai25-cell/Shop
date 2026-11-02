@@ -48,6 +48,9 @@ export function productImageUrl(path: string | null | undefined) {
   return `${base}/storage/v1/object/public/product-images/${path}`;
 }
 
+/** Category cover image (stored in the same public bucket, or a full remote URL). */
+export const categoryImageUrl = productImageUrl;
+
 /** Strip characters that have meaning in PostgREST filter syntax. */
 export function sanitizeSearch(q: string) {
   return q.replace(/[^\p{L}\p{N}\s-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, 60);

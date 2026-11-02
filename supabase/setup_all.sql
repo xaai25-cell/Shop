@@ -64,6 +64,9 @@ create table if not exists public.categories (
   created_at   timestamptz not null default now()
 );
 
+alter table public.categories add column if not exists image_path text
+  check (image_path is null or char_length(image_path) <= 500);
+
 create table if not exists public.products (
   id                uuid primary key default gen_random_uuid(),
   name              text not null check (char_length(name) between 1 and 160),
@@ -542,6 +545,25 @@ drop policy if exists "receipts admin read" on storage.objects;
 create policy "receipts admin read" on storage.objects
   for select to authenticated using (bucket_id = 'receipts' and (select public.is_admin()));
 
+-- Category cover images for the "Shop by category" tiles.
+-- Safe to run more than once.
+
+alter table public.categories add column if not exists image_path text
+  check (image_path is null or char_length(image_path) <= 500);
+
+-- Free demo photos (Unsplash License). Only fills categories that don't have an image yet.
+update public.categories c
+   set image_path = v.url
+  from (values
+    ('clothing',    'https://images.unsplash.com/photo-1540221652346-e5dd6b50f3e7?auto=format&fit=crop&w=1200&q=80'),
+    ('shoes',       'https://images.unsplash.com/photo-1462927114214-6956d2fddd4e?auto=format&fit=crop&w=1200&q=80'),
+    ('accessories', 'https://images.unsplash.com/photo-1760446031500-dfc64a62dd9b?auto=format&fit=crop&w=1200&q=80'),
+    ('home',        'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=1200&q=80'),
+    ('electronics', 'https://images.unsplash.com/photo-1571126817476-92bf7da319c3?auto=format&fit=crop&w=1200&q=80'),
+    ('beauty',      'https://images.unsplash.com/photo-1602558618194-3037081afe0d?auto=format&fit=crop&w=1200&q=80')
+  ) as v(slug, url)
+ where c.slug = v.slug and c.image_path is null;
+
 -- ===================== DEMO DATA =====================
 -- Demo catalog: 6 categories, 26 products with variants and free Unsplash photos.
 -- Photos: Unsplash License (free for commercial use). Replace with your own product photos before launch.
@@ -1008,5 +1030,18 @@ select (select id from public.products where slug = 'ocean-mist-perfume'), v.pat
   ('https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1200&q=80', 'Ocean Mist Perfume', null, 1),
   ('https://images.unsplash.com/photo-1622618991746-fe6004db3a47?auto=format&fit=crop&w=1200&q=80', 'Ocean Mist Perfume', null, 2)
 ) as v(path, alt, color, sort_order);
+
+-- Free demo photos (Unsplash License). Only fills categories that don't have an image yet.
+update public.categories c
+   set image_path = v.url
+  from (values
+    ('clothing',    'https://images.unsplash.com/photo-1540221652346-e5dd6b50f3e7?auto=format&fit=crop&w=1200&q=80'),
+    ('shoes',       'https://images.unsplash.com/photo-1462927114214-6956d2fddd4e?auto=format&fit=crop&w=1200&q=80'),
+    ('accessories', 'https://images.unsplash.com/photo-1760446031500-dfc64a62dd9b?auto=format&fit=crop&w=1200&q=80'),
+    ('home',        'https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=1200&q=80'),
+    ('electronics', 'https://images.unsplash.com/photo-1571126817476-92bf7da319c3?auto=format&fit=crop&w=1200&q=80'),
+    ('beauty',      'https://images.unsplash.com/photo-1602558618194-3037081afe0d?auto=format&fit=crop&w=1200&q=80')
+  ) as v(slug, url)
+ where c.slug = v.slug and c.image_path is null;
 
 commit;

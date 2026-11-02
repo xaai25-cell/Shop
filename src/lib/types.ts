@@ -6,6 +6,7 @@ export type Category = {
   slug: string;
   description: string | null;
   color: string;
+  image_path: string | null;
   sort_order: number;
   is_active: boolean;
 };

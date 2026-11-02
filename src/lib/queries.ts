@@ -12,7 +12,7 @@ function logError(where: string, error: { message: string } | null) {
 export const getCategories = cache(async (): Promise<Category[]> => {
   const { data, error } = await createPublicClient()
     .from("categories")
-    .select("id, name, slug, description, color, sort_order, is_active")
+    .select("id, name, slug, description, color, image_path, sort_order, is_active")
     .eq("is_active", true)
     .order("sort_order")
     .order("name");

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { useRef, useState, useTransition } from "react";
+import { ImagePlus, Pencil, Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { deleteCategory, saveCategory } from "@/app/admin/actions";
-import { slugify } from "@/lib/utils";
+import { deleteCategory, removeCategoryImage, saveCategory, uploadCategoryImage } from "@/app/admin/actions";
+import { compressImage } from "@/lib/compress-image";
+import { categoryImageUrl, slugify } from "@/lib/utils";
 import type { Category } from "@/lib/types";
-import { Button, Card, Checkbox, Field, Input, Textarea } from "@/components/ui";
+import { Button, Card, Checkbox, Field, Input, Spinner, Textarea } from "@/components/ui";
 
 type Draft = {
   id?: string;
@@ -68,7 +70,7 @@ export function CategoryManager({ categories, productCounts }: { categories: Cat
       <Card className="divide-y divide-slate-100">
         {categories.map((c) => (
           <div key={c.id} className="flex items-center gap-4 p-4">
-            <span className="h-10 w-10 shrink-0 rounded-xl" style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}88)` }} />
+            <CategoryImage category={c} />
             <div className="min-w-0 flex-1">
               <p className="font-semibold">
                 {c.name} {!c.is_active && <span className="ml-1 text-xs font-medium text-slate-400">(hidden)</span>}
@@ -142,6 +144,69 @@ export function CategoryManager({ categories, productCounts }: { categories: Cat
           </div>
         </form>
       </Card>
+    </div>
+  );
+}
+
+function CategoryImage({ category }: { category: Category }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [pending, startTransition] = useTransition();
+  const src = categoryImageUrl(category.image_path);
+
+  async function upload(file: File | undefined) {
+    if (!file) return;
+    const compressed = await compressImage(file, { maxSize: 1600, quality: 0.82 }).catch(() => file);
+    const fd = new FormData();
+    fd.set("file", compressed);
+    startTransition(async () => {
+      const res = await uploadCategoryImage(category.id, fd);
+      if (res.ok) toast.success(res.message ?? "Uploaded");
+      else toast.error(res.error);
+    });
+  }
+
+  return (
+    <div className="group relative h-14 w-20 shrink-0">
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={pending}
+        aria-label={`Change image for ${category.name}`}
+        title="Change cover image"
+        className="relative block h-full w-full overflow-hidden rounded-xl ring-1 ring-slate-200"
+        style={{ background: `linear-gradient(135deg, ${category.color}, ${category.color}88)` }}
+      >
+        {src && <Image src={src} alt="" fill sizes="80px" className="object-cover" />}
+        <span className="absolute inset-0 grid place-items-center bg-slate-900/40 text-white opacity-0 transition group-hover:opacity-100">
+          {pending ? <Spinner className="h-4 w-4" /> : <ImagePlus className="h-4 w-4" />}
+        </span>
+      </button>
+      {src && !pending && (
+        <button
+          type="button"
+          aria-label={`Remove image for ${category.name}`}
+          onClick={() => {
+            if (!confirm("Remove this category image?")) return;
+            startTransition(async () => {
+              const res = await removeCategoryImage(category.id);
+              if (!res.ok) toast.error(res.error);
+            });
+          }}
+          className="absolute -right-1.5 -top-1.5 hidden h-5 w-5 place-items-center rounded-full bg-white text-slate-500 shadow ring-1 ring-slate-200 hover:text-rose-600 group-hover:grid"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="sr-only"
+        onChange={(e) => {
+          upload(e.target.files?.[0]);
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }

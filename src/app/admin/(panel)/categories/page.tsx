@@ -7,7 +7,7 @@ export const metadata = { title: "Categories" };
 export default async function CategoriesPage() {
   const { supabase } = await requireAdmin();
   const [{ data }, { data: counts }] = await Promise.all([
-    supabase.from("categories").select("id, name, slug, description, color, sort_order, is_active").order("sort_order").order("name"),
+    supabase.from("categories").select("id, name, slug, description, color, image_path, sort_order, is_active").order("sort_order").order("name"),
     supabase.from("products").select("category_id"),
   ]);
   const productCounts: Record<string, number> = {};

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Truck, Upload, Sparkles } from "lucide-react";
 import { getCategories, getFeaturedProducts, getNewArrivals } from "@/lib/queries";
@@ -6,6 +7,7 @@ import { FadeIn, Stagger, StaggerItem } from "@/components/motion";
 import { HeroVisual } from "@/components/hero-visual";
 import { buttonClasses } from "@/components/ui";
 import { siteConfig } from "@/lib/config";
+import { categoryImageUrl } from "@/lib/utils";
 
 export const revalidate = 60;
 
@@ -59,11 +61,27 @@ export default async function HomePage() {
               <StaggerItem key={c.id}>
                 <Link
                   href={`/products?category=${c.slug}`}
-                  className="group relative flex aspect-[5/4] flex-col justify-end overflow-hidden rounded-3xl p-5 text-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  className="group relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-3xl p-5 text-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl sm:aspect-[5/4] lg:aspect-[4/5]"
                   style={{ background: `linear-gradient(135deg, ${c.color}, ${c.color}aa 60%, #0f172a)` }}
                 >
-                  <span className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/20 blur-xl transition-transform duration-700 group-hover:scale-150" />
-                  <span className="relative text-lg font-bold">{c.name}</span>
+                  {categoryImageUrl(c.image_path) ? (
+                    <Image
+                      src={categoryImageUrl(c.image_path)!}
+                      alt=""
+                      fill
+                      sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
+                      className="object-cover transition duration-700 ease-out group-hover:scale-110"
+                    />
+                  ) : (
+                    <span className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/20 blur-xl transition-transform duration-700 group-hover:scale-150" />
+                  )}
+                  {/* Colour wash in the category colour keeps text readable on any photo */}
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 opacity-90 transition-opacity duration-500 group-hover:opacity-75"
+                    style={{ background: `linear-gradient(to top, ${c.color} 0%, ${c.color}99 28%, transparent 65%)` }}
+                  />
+                  <span className="relative text-lg font-bold drop-shadow-sm">{c.name}</span>
                   <span className="relative mt-1 inline-flex items-center gap-1 text-xs font-medium text-white/80">
                     Explore <ArrowRight className="h-3 w-3 transition group-hover:translate-x-1" />
                   </span>
