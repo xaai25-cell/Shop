@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, BarChart3, Package, ShieldCheck, ShoppingCart } from "lucide-react";
-import { getAdmin } from "@/lib/auth";
+import { getStaffUser } from "@/lib/auth";
+import { homeFor } from "@/lib/roles";
 import { siteConfig } from "@/lib/config";
 import { firstParam } from "@/lib/utils";
 import { Logo } from "@/components/logo";
@@ -16,7 +17,8 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  if (await getAdmin()) redirect("/admin");
+  const signedIn = await getStaffUser();
+  if (signedIn) redirect(homeFor(signedIn.role));
   const next = firstParam((await searchParams).next) ?? "/admin";
 
   return (

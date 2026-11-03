@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { requireAdmin } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
+import { hasRole } from "@/lib/roles";
 import { PRODUCT_SELECT } from "@/lib/queries";
 import { ProductForm } from "@/components/admin/product-form";
 import { ImageManager } from "@/components/admin/image-manager";
@@ -13,7 +14,7 @@ export const metadata = { title: "Edit product" };
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const { supabase } = await requireAdmin();
+  const { supabase, role } = await requireRole("staff");
 
   const [{ data: productData }, { data: cats }] = await Promise.all([
     supabase.from("products").select(PRODUCT_SELECT).eq("id", id).maybeSingle(),
@@ -36,7 +37,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
           <Link href={`/products/${product.slug}`} target="_blank" className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600">
             View in store <ExternalLink className="h-3.5 w-3.5" />
           </Link>
-          <DeleteProductButton id={product.id} name={product.name} />
+          {hasRole(role, "manager") && <DeleteProductButton id={product.id} name={product.name} />}
         </div>
       </div>
       <ImageManager productId={product.id} images={product.images} colors={colors} />

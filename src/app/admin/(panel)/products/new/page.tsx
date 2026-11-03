@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { requireAdmin } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { ProductForm } from "@/components/admin/product-form";
 import type { Category } from "@/lib/types";
 
 export const metadata = { title: "New product" };
 
 export default async function NewProductPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireRole("staff");
   const { data } = await supabase.from("categories").select("id, name, slug, description, color, sort_order, is_active").order("sort_order");
   return (
     <div className="space-y-6">

@@ -2,14 +2,16 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { STAFF_ROLES, hasRole, homeFor, type StaffRole } from "@/lib/roles";
 
 /**
  * Verifies the session with Supabase Auth (getUser hits the auth server, so it
- * can't be spoofed by a forged cookie) and checks the admin role from the DB.
- * Call this at the top of EVERY admin page and server action – middleware alone
- * is not a security boundary.
+ * can't be spoofed by a forged cookie) and reads the role from the DB.
+ * Returns null for anyone who isn't staff, manager or admin.
+ * Call requireRole / assertRole at the top of EVERY admin page and server action –
+ * middleware alone is not a security boundary.
  */
-export const getAdmin = cache(async () => {
+export const getStaffUser = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,19 +24,22 @@ export const getAdmin = cache(async () => {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") return null;
-  return { user, profile, supabase };
+  const role = profile?.role as StaffRole | undefined;
+  if (!role || !(STAFF_ROLES as readonly string[]).includes(role)) return null;
+  return { user, profile: { role, full_name: (profile?.full_name as string | null) ?? null }, role, supabase };
 });
 
-export async function requireAdmin() {
-  const admin = await getAdmin();
-  if (!admin) redirect("/admin/login");
-  return admin;
+/** For pages: redirects to sign-in, or to the user's home if their role is too low. */
+export async function requireRole(min: StaffRole) {
+  const staff = await getStaffUser();
+  if (!staff) redirect("/admin/login");
+  if (!hasRole(staff.role, min)) redirect(homeFor(staff.role));
+  return staff;
 }
 
 /** For server actions: throws instead of redirecting. */
-export async function assertAdmin() {
-  const admin = await getAdmin();
-  if (!admin) throw new Error("Unauthorized");
-  return admin;
+export async function assertRole(min: StaffRole) {
+  const staff = await getStaffUser();
+  if (!staff || !hasRole(staff.role, min)) throw new Error("Unauthorized");
+  return staff;
 }

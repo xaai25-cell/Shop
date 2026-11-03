@@ -20,6 +20,18 @@ A modern, responsive online store with bank-transfer payments (customers upload 
 - Products: create/edit, variants (colour, hex swatch, size, SKU, price override, stock), multi-image upload with reordering, colour tagging, alt text, show/hide, featured
 - Categories: create/edit with colours and ordering
 
+## Team roles
+
+Admins manage accounts at **/admin/users** (create users, set passwords, change access, delete).
+
+| Role | Can do |
+|---|---|
+| **Admin** | Everything, including creating and managing users |
+| **Manager** | Everything except users: dashboard & statistics, orders and payment slips, products, categories (including deleting) |
+| **Staff** | View and edit products and categories (create, edit, images, stock); cannot delete products/categories or see orders |
+
+Access is enforced twice: in the app (every page and server action checks the role) and in the database (row-level security policies in `supabase/migrations/0003_roles.sql`). The app always keeps at least one admin, and admins can't remove their own admin access.
+
 ## Image compression
 
 Every image is compressed twice so storage stays small:

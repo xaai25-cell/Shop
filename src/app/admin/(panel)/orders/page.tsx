@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { requireAdmin } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { ORDER_STATUSES, STATUS_META, type OrderStatus } from "@/lib/constants";
 import { cn, firstParam, formatDate, formatPrice, sanitizeSearch } from "@/lib/utils";
 import { Card } from "@/components/ui";
@@ -15,7 +15,7 @@ export default async function OrdersPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireRole("manager");
   const sp = await searchParams;
   const statusParam = firstParam(sp.status);
   const status = ORDER_STATUSES.includes(statusParam as OrderStatus) ? (statusParam as OrderStatus) : null;

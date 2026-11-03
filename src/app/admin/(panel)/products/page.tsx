@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
-import { requireAdmin } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { cn, firstParam, formatPrice, productImageUrl, sanitizeSearch } from "@/lib/utils";
 import { Card, buttonClasses } from "@/components/ui";
 import { Pagination } from "@/components/pagination";
@@ -16,7 +16,7 @@ export default async function AdminProductsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireRole("staff");
   const sp = await searchParams;
   const q = sanitizeSearch(firstParam(sp.q) ?? "");
   const page = Math.max(1, Number(firstParam(sp.page)) || 1);

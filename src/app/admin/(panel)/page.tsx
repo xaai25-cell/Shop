@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, Banknote, Clock, Package, ShoppingCart } from "lucide-react";
-import { requireAdmin } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { ORDER_STATUSES, STATUS_META, type OrderStatus } from "@/lib/constants";
 import { cn, formatDate, formatPrice } from "@/lib/utils";
 import { Card } from "@/components/ui";
@@ -25,7 +25,7 @@ type Stats = {
 };
 
 export default async function DashboardPage() {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireRole("manager");
   const [{ data: statsData, error }, { data: recent }] = await Promise.all([
     supabase.rpc("admin_stats", { p_days: 30 }),
     supabase

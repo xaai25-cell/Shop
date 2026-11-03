@@ -4,7 +4,8 @@ import { randomUUID } from "crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { assertAdmin } from "@/lib/auth";
+import { assertRole } from "@/lib/auth";
+import { STAFF_ROLES, homeFor, type StaffRole } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { processImage, IMAGE_PRESETS } from "@/lib/image-processing";
@@ -48,14 +49,15 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
   if (error || !data.user) return { error: "Invalid email or password." };
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
-  if (profile?.role !== "admin") {
+  const role = profile?.role as StaffRole | undefined;
+  if (!role || !(STAFF_ROLES as readonly string[]).includes(role)) {
     await supabase.auth.signOut();
-    return { error: "This account does not have admin access." };
+    return { error: "This account does not have access to the admin area." };
   }
 
   // Only allow relative redirects inside /admin (prevents open redirects)
-  const next = parsed.data.next && /^\/admin(\/[\w/-]*)?$/.test(parsed.data.next) ? parsed.data.next : "/admin";
-  redirect(next);
+  const requested = parsed.data.next && /^\/admin(\/[\w/-]*)?$/.test(parsed.data.next) ? parsed.data.next : null;
+  redirect(requested && requested !== "/admin" ? requested : homeFor(role));
 }
 
 export async function signOut() {
@@ -70,7 +72,7 @@ export async function saveProduct(
   productId: string | null,
   input: ProductInput,
 ): Promise<ActionResult<{ id: string }>> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("staff");
   if (productId && !uuid.safeParse(productId).success) return { ok: false, error: "Invalid product." };
 
   const parsed = productSchema.safeParse(input);
@@ -134,7 +136,7 @@ export async function saveProduct(
 }
 
 export async function setProductActive(productId: string, isActive: boolean): Promise<ActionResult> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("staff");
   if (!uuid.safeParse(productId).success) return { ok: false, error: "Invalid product." };
   const { error } = await supabase.from("products").update({ is_active: isActive }).eq("id", productId);
   if (error) return { ok: false, error: dbError(error.message) };
@@ -143,7 +145,7 @@ export async function setProductActive(productId: string, isActive: boolean): Pr
 }
 
 export async function deleteProduct(productId: string): Promise<ActionResult> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("manager");
   if (!uuid.safeParse(productId).success) return { ok: false, error: "Invalid product." };
 
   const { data: images } = await supabase.from("product_images").select("path").eq("product_id", productId);
@@ -159,7 +161,7 @@ export async function deleteProduct(productId: string): Promise<ActionResult> {
 // ---------------------------------------------------------------- product images
 
 export async function uploadProductImages(productId: string, formData: FormData): Promise<ActionResult<{ count: number }>> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("staff");
   if (!uuid.safeParse(productId).success) return { ok: false, error: "Invalid product." };
 
   const files = formData.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
@@ -217,7 +219,7 @@ export async function updateProductImage(
   imageId: string,
   values: { alt?: string | null; color?: string | null },
 ): Promise<ActionResult> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("staff");
   const parsed = z
     .object({
       id: uuid,
@@ -235,7 +237,7 @@ export async function updateProductImage(
 }
 
 export async function reorderProductImages(productId: string, orderedIds: string[]): Promise<ActionResult> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("staff");
   const parsed = z.object({ productId: uuid, ids: z.array(uuid).max(50) }).safeParse({ productId, ids: orderedIds });
   if (!parsed.success) return { ok: false, error: "Invalid input." };
   const results = await Promise.all(
@@ -250,7 +252,7 @@ export async function reorderProductImages(productId: string, orderedIds: string
 }
 
 export async function deleteProductImage(imageId: string): Promise<ActionResult> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("staff");
   if (!uuid.safeParse(imageId).success) return { ok: false, error: "Invalid image." };
   const { data: img } = await supabase.from("product_images").select("path").eq("id", imageId).single();
   const { error } = await supabase.from("product_images").delete().eq("id", imageId);
@@ -263,7 +265,7 @@ export async function deleteProductImage(imageId: string): Promise<ActionResult>
 // ---------------------------------------------------------------- categories
 
 export async function saveCategory(input: CategoryInput): Promise<ActionResult> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("staff");
   const parsed = categorySchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const { id, ...values } = parsed.data;
@@ -276,7 +278,7 @@ export async function saveCategory(input: CategoryInput): Promise<ActionResult> 
 }
 
 export async function uploadCategoryImage(categoryId: string, formData: FormData): Promise<ActionResult> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("staff");
   if (!uuid.safeParse(categoryId).success) return { ok: false, error: "Invalid category." };
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { ok: false, error: "No file selected." };
@@ -308,7 +310,7 @@ export async function uploadCategoryImage(categoryId: string, formData: FormData
 }
 
 export async function removeCategoryImage(categoryId: string): Promise<ActionResult> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("staff");
   if (!uuid.safeParse(categoryId).success) return { ok: false, error: "Invalid category." };
   const { data: current } = await supabase.from("categories").select("image_path").eq("id", categoryId).single();
   const { error } = await supabase.from("categories").update({ image_path: null }).eq("id", categoryId);
@@ -320,7 +322,7 @@ export async function removeCategoryImage(categoryId: string): Promise<ActionRes
 }
 
 export async function deleteCategory(id: string): Promise<ActionResult> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("manager");
   if (!uuid.safeParse(id).success) return { ok: false, error: "Invalid category." };
   const { data: current } = await supabase.from("categories").select("image_path").eq("id", id).single();
   const { error } = await supabase.from("categories").delete().eq("id", id);
@@ -334,7 +336,7 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
 // ---------------------------------------------------------------- orders
 
 export async function updateOrderStatus(input: z.input<typeof statusChangeSchema>): Promise<ActionResult> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("manager");
   const parsed = statusChangeSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Invalid input." };
   if (parsed.data.status === "rejected" && !parsed.data.note) {
@@ -354,7 +356,7 @@ export async function updateOrderStatus(input: z.input<typeof statusChangeSchema
 }
 
 export async function saveAdminNote(orderId: string, note: string): Promise<ActionResult> {
-  const { supabase } = await assertAdmin();
+  const { supabase } = await assertRole("manager");
   const parsed = z.object({ id: uuid, note: z.string().trim().max(1000) }).safeParse({ id: orderId, note });
   if (!parsed.success) return { ok: false, error: "Invalid input." };
   const { error } = await supabase

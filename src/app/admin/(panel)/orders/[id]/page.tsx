@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { requireAdmin } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { STATUS_META } from "@/lib/constants";
 import { cn, formatDate, formatPrice, productImageUrl } from "@/lib/utils";
 import type { Order, OrderHistory, OrderItem } from "@/lib/types";
@@ -16,7 +16,7 @@ export const metadata = { title: "Order details" };
 export default async function AdminOrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireRole("manager");
 
   const [{ data }, { data: historyData }] = await Promise.all([
     supabase

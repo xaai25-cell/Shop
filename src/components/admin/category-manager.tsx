@@ -30,7 +30,15 @@ const blank = (n: number): Draft => ({
   is_active: true,
 });
 
-export function CategoryManager({ categories, productCounts }: { categories: Category[]; productCounts: Record<string, number> }) {
+export function CategoryManager({
+  categories,
+  productCounts,
+  canDelete,
+}: {
+  categories: Category[];
+  productCounts: Record<string, number>;
+  canDelete: boolean;
+}) {
   const [draft, setDraft] = useState<Draft>(blank(categories.length));
   const [pending, startTransition] = useTransition();
 
@@ -80,9 +88,11 @@ export function CategoryManager({ categories, productCounts }: { categories: Cat
             <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" onClick={() => edit(c)} aria-label={`Edit ${c.name}`}>
               <Pencil className="h-4 w-4" />
             </button>
-            <button className="rounded-lg p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600" onClick={() => remove(c)} aria-label={`Delete ${c.name}`}>
-              <Trash2 className="h-4 w-4" />
-            </button>
+            {canDelete && (
+              <button className="rounded-lg p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600" onClick={() => remove(c)} aria-label={`Delete ${c.name}`}>
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
           </div>
         ))}
         {categories.length === 0 && <p className="p-8 text-center text-sm text-slate-500">No categories yet.</p>}
