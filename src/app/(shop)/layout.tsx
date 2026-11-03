@@ -1,12 +1,14 @@
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CartDrawer } from "@/components/cart-drawer";
+import { RainBackground } from "@/components/rain-background";
 import { getCategories } from "@/lib/queries";
 
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
   const categories = await getCategories().catch(() => []);
   return (
     <>
+      <RainBackground />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow"
