@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { AnimatePresence, motion, useAnimate } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { AlertCircle, ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { signIn, type LoginState } from "../actions";
 import { Spinner } from "@/components/ui";
@@ -17,19 +17,16 @@ export function LoginForm({ next }: { next: string }) {
   const [capsLock, setCapsLock] = useState(false);
   // Controlled so the email survives a failed attempt (React resets uncontrolled form fields after an action).
   const [email, setEmail] = useState("");
-  const [scope, animate] = useAnimate<HTMLFormElement>();
+  // Counts failed attempts so the error message re-animates (shakes) every time.
+  const [attempt, setAttempt] = useState(0);
   const hasError = !!state?.error;
 
-  // Gentle shake each time sign-in fails
   useEffect(() => {
-    if (state?.error && scope.current) {
-      animate(scope.current, { x: [0, -10, 10, -6, 6, 0] }, { duration: 0.4 });
-    }
-  }, [state, animate, scope]);
+    if (state?.error) setAttempt((n) => n + 1);
+  }, [state]);
 
   return (
     <motion.form
-      ref={scope}
       action={action}
       className="mt-8 space-y-5"
       initial={{ opacity: 0, y: 12 }}
@@ -75,7 +72,7 @@ export function LoginForm({ next }: { next: string }) {
             minLength={6}
             placeholder="••••••••"
             aria-invalid={hasError}
-            onKeyUp={(e) => setCapsLock(e.getModifierState?.("CapsLock") ?? false)}
+            onKeyUp={(e) => setCapsLock(e.getModifierState("CapsLock"))}
             className={`${inputClass} pr-12`}
           />
           <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 transition peer-focus:text-brand-600" />
@@ -95,10 +92,12 @@ export function LoginForm({ next }: { next: string }) {
       <AnimatePresence>
         {hasError && (
           <motion.p
+            key={attempt}
             role="alert"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, x: 0 }}
+            animate={{ opacity: 1, x: [0, -10, 10, -6, 6, 0] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
             className="flex items-start gap-2 overflow-hidden rounded-xl bg-rose-50 p-3 text-sm text-rose-700 ring-1 ring-rose-200"
           >
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
