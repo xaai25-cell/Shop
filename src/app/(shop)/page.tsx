@@ -56,7 +56,7 @@ export default async function HomePage() {
       {categories.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <SectionHeading title="Shop by category" href="/products" />
-          <Stagger className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <Stagger className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {categories.map((c) => (
               <StaggerItem key={c.id}>
                 <Link

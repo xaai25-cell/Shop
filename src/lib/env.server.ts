@@ -1,11 +1,6 @@
 import "server-only";
+import { createHash } from "crypto";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, assertSupabaseConfig } from "@/lib/supabase/keys";
-
-function required(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing required environment variable: ${name}`);
-  return value;
-}
 
 export const serverEnv = {
   get supabaseUrl() {
@@ -22,11 +17,25 @@ export const serverEnv = {
     if (!key) throw new Error("Missing required environment variable: SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY)");
     return key;
   },
+  /**
+   * Secret used to sign customer order links and salt rate-limit keys.
+   * Uses ORDER_TOKEN_SECRET when set; otherwise derives one from the Supabase
+   * server secrets (never sent to the browser), so the site still works if the
+   * variable was forgotten. Set ORDER_TOKEN_SECRET explicitly for best practice.
+   */
   get orderTokenSecret() {
-    const s = required("ORDER_TOKEN_SECRET");
-    if (s.length < 32) throw new Error("ORDER_TOKEN_SECRET must be at least 32 characters");
-    return s;
+    const explicit = (process.env.ORDER_TOKEN_SECRET ?? "").trim();
+    if (explicit.length >= 32) return explicit;
+    const base = (
+      process.env.SUPABASE_JWT_SECRET ??
+      process.env.SUPABASE_SERVICE_ROLE_KEY ??
+      process.env.SUPABASE_SECRET_KEY ??
+      ""
+    ).trim();
+    if (!base) throw new Error("Missing ORDER_TOKEN_SECRET (32+ random characters)");
+    return createHash("sha256").update(`order-token:${base}`).digest("hex");
   },
+
   get deliveryFee() {
     const n = Number(process.env.DELIVERY_FEE ?? 0);
     return Number.isFinite(n) && n >= 0 ? n : 0;

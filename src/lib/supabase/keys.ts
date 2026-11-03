@@ -8,6 +8,9 @@ export const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim().
 export const SUPABASE_ANON_KEY = (
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  // Server-only fallbacks (names used by Vercel's Supabase integration)
+  process.env.SUPABASE_ANON_KEY ??
+  process.env.SUPABASE_PUBLISHABLE_KEY ??
   ""
 ).trim();
 
